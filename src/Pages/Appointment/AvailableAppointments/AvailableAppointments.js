@@ -52,7 +52,6 @@ const AvailableAppointments = ({date}) => {
                     booking={booking}
                     date={date}
                     >
-
                     </Booking>)
                 }  
             </Grid>
