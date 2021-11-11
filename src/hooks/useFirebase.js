@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import initializeFirebase from "../Pages/Login/Firebase/firebase.init";
-import { getAuth, createUserWithEmailAndPassword,signInWithEmailAndPassword , signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updateProfile } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword,signInWithEmailAndPassword , signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updateProfile, getIdToken } from "firebase/auth";
 
 
 // initialize FIREBASE APP
@@ -10,6 +10,8 @@ const useFirebase = () =>{
     const [user, setUser] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [authError, setAuthError] = useState('');
+    const [admin, setAdmin] = useState(false);
+    const [token, setToken] = useState('');
 
     const auth = getAuth();
     const googleProvider = new GoogleAuthProvider();
@@ -69,19 +71,30 @@ const useFirebase = () =>{
       })
       .finally(() => setIsLoading(false));
     }
+
     // observe user is present or users state
     useEffect(() =>{
         const unsubscribed = onAuthStateChanged(auth, (user) => {
             if (user) {
-              const uid = user.uid;
+              // const uid = user.uid;
                 setUser(user);
+                getIdToken(user)
+                .then(idToken =>{
+                    setToken(idToken);
+                })
             } else {
               setUser({})
             }
             setIsLoading(false);
           });
           return () => unsubscribed;
-    }, [])
+    }, [auth])
+
+    useEffect(() => {
+      fetch(`http://localhost:5000/users/${user.email}`)
+      .then(res => res.json())
+      .then(data => setAdmin(data.admin))
+    },[user.email])
 
     const logOut = () =>{
         setIsLoading(true);
@@ -107,6 +120,8 @@ const useFirebase = () =>{
 
     return{
         user,
+        admin,
+        token,
         isLoading,
         authError,
         registerUser,
